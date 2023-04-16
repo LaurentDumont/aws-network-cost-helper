@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Vis Network | Events | Interaction events</title>
+
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <style type="text/css">
+        #mynetwork {
+            width: 1920px;
+            height: 1080px;
+            border: 5px solid lightgray;
+        }
+
+        table.legend_table {
+            font-size: 11px;
+            border-width: 1px;
+            border-color: #d3d3d3;
+            border-style: solid;
+        }
+
+        table.legend_table,
+        td {
+            border-width: 1px;
+            border-color: #d3d3d3;
+            border-style: solid;
+            padding: 2px;
+        }
+
+        div.table_content {
+            width: 80px;
+            text-align: center;
+        }
+
+        div.table_description {
+            width: 100px;
+        }
+
+        #operation {
+            font-size: 28px;
+        }
+
+        #node-popUp {
+            display: none;
+            position: absolute;
+            top: 350px;
+            left: 170px;
+            z-index: 299;
+            width: 250px;
+            height: 120px;
+            background-color: #f9f9f9;
+            border-style: solid;
+            border-width: 3px;
+            border-color: #5394ed;
+            padding: 10px;
+            text-align: center;
+        }
+
+        #edge-popUp {
+            display: none;
+            position: absolute;
+            top: 350px;
+            left: 170px;
+            z-index: 299;
+            width: 250px;
+            height: 90px;
+            background-color: #f9f9f9;
+            border-style: solid;
+            border-width: 3px;
+            border-color: #5394ed;
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+    </style>
+</head>
+
+<body>
+    <div id="node-popUp">
+        <span id="node-operation">node</span> <br />
+        <table style="margin: auto">
+            <tr>
+                <td>id</td>
+                <td><input id="node-id" value="new value" /></td>
+            </tr>
+            <tr>
+                <td>label</td>
+                <td><input id="node-label" value="new value" /></td>
+            </tr>
+        </table>
+        <input type="button" value="save" id="node-saveButton" />
+        <input type="button" value="cancel" id="node-cancelButton" />
+    </div>
+    <div id="edge-popUp">
+        <span id="edge-operation">edge</span> <br />
+        <table style="margin: auto">
+            <tr>
+                <td>label</td>
+                <td><input id="edge-label" value="new value" /></td>
+            </tr>
+        </table>
+        <input type="button" value="save" id="edge-saveButton" />
+        <input type="button" value="cancel" id="edge-cancelButton" />
+    </div>
+    <h2 id="totalprice"></h2>
+    <p id="edges"></p>
+    <div id="mynetwork"></div>
+    <h2 id="eventSpanHeading"></h2>
+
+    <pre id="eventSpanContent"></pre>
+
+    <script type="text/javascript">
+        // create an array with nodes
+        var nodes = new vis.DataSet([
+            {
+                id: 'vpc-001',
+                label: "vpc-001",
+                //title: "I have a popup!",
+                //shape: "box",
+                shape: "image",
+                image: "vpc.png",
+                //widthConstraint: 800,
+                fixed: { x: true, y: true }, x: 0, y: 0
+            },
+            {
+                id: 'ec2-001-az-a',
+                label: "ec2-001-az-a",
+                //title: "I have a popup!",
+                shape: "image",
+                image: "ec2.png",
+                fixed: { x: true, y: true }, x: 0, y: 100
+            },
+            {
+                id: 'ec2-001-az-b',
+                label: "ec2-001-az-b",
+                shape: "image",
+                image: "ec2.png",
+                fixed: { x: true, y: true }, x: 500, y: 100
+            },
+            {
+                id: 'private-link-001',
+                label: "private-link-001",
+                //shape: "box",
+                shape: "image",
+                image: "privatelink.png",
+                fixed: { x: true, y: true },
+                x: -500, y: 100
+            },
+
+
+        ]);
+
+        // create an array with edges
+        var edges = new vis.DataSet([
+            {
+                id: "vpc-vm-a",
+                from: 'vpc-001',
+                to: "ec2-001-az-a",
+                font: { align: "middle" }
+            },
+
+            //{
+            //    id: "vpc-vm-b",
+            //    from: 'vpc-001',
+            //    to: "ec2-001-az-b",
+            //    font: { align: "middle" }
+            //},
+            {
+                id: "vpc-vm-a-vm-b",
+                from: 'ec2-001-az-a',
+                to: "ec2-001-az-b",
+                label: '1000GB',
+                //font: { align: "middle" },
+                arrows: "to",
+                smooth: { type: "curvedCCW", roundness: 0.4 }
+            },
+            {
+                id: "vpc-vm-b-vm-a",
+                from: 'ec2-001-az-b',
+                to: "ec2-001-az-a",
+                label: '200GB',
+                //font: { align: "middle" },
+                arrows: "to",
+                smooth: { type: "curvedCCW", roundness: 0.2 }
+            },
+            //{ id: "private-link-001-vpc", from: 'private-link-001', to: "vpc-001", label: '1000', font: { align: "middle" } },
+        ]);
+
+        // create a network
+        var container = document.getElementById("mynetwork");
+        var data = {
+            nodes: nodes,
+            edges: edges,
+        };
+
+        var options = {
+            "interaction": {
+                "dragNodes": false,
+                "dragView": false,
+                "keyboard": false,
+                "zoomView": false
+            },
+            physics: false,
+            manipulation: {
+                enabled: true,
+            },
+            //layout: {
+            //    hierarchical: {
+            //        enabled: true,
+            //        levelSeparation: 300,
+            //    },
+            //},
+            //physics: {
+            //    hierarchicalRepulsion: {
+            //        nodeDistance: 300,
+            //    },
+            //},
+            manipulation: {
+                addNode: function (data, callback) {
+                    // filling in the popup DOM elements
+                    document.getElementById("node-operation").innerText = "Add Node";
+                    editNode(data, clearNodePopUp, callback);
+                },
+                editNode: function (data, callback) {
+                    // filling in the popup DOM elements
+                    document.getElementById("node-operation").innerText = "Edit Node";
+                    editNode(data, cancelNodeEdit, callback);
+                },
+                addEdge: function (data, callback) {
+                    if (data.from == data.to) {
+                        var r = confirm("Do you want to connect the node to itself?");
+                        if (r != true) {
+                            callback(null);
+                            return;
+                        }
+                    }
+                    document.getElementById("edge-operation").innerText = "Add Edge";
+                    editEdgeWithoutDrag(data, callback);
+                },
+                editEdge: {
+                    editWithoutDrag: function (data, callback) {
+                        document.getElementById("edge-operation").innerText =
+                            "Edit Edge";
+                        editEdgeWithoutDrag(data, callback);
+                    },
+                },
+            },
+        };
+        var network = new vis.Network(container, data, options);
+        var sourceCanvas = document.querySelector('canvas');
+        sourceCanvas.style.backgroundImage = "url('bg.png')";
+        network.body.data.edges.add([{ id: "super-private-link", from: "private-link-001", to: 'vpc-001', arrows: "from", label: '1000GB' }])
+        function calculate_price() {
+            var all_nodes = network.getPositions()
+            var total_bandwidth = [];
+            var all_edges = [];
+            for (var key in all_nodes) {
+                //console.log(key)
+                var node_edges = network.getConnectedEdges(key)
+                all_edges.push(node_edges);
+                console.log(node_edges)
+                for (var one_edge_key of node_edges) {
+                    var test_label = edges.get(one_edge_key).label
+                    if (test_label === undefined) { continue; }
+                    console.log(test_label)
+                    total_bandwidth.push(parseInt(test_label));
+                }
+            }
+            //document.getElementById("edges").innerText = all_edges
+            const initialValue = 0;
+            const sumWithInitial = total_bandwidth.reduce(
+                (accumulator, currentValue) => accumulator + currentValue,
+                initialValue
+            );
+            console.log(sumWithInitial)
+            var filteredGBTotal = sumWithInitial / 2
+            document.getElementById("totalprice").innerText =
+                filteredGBTotal * 0.01 + '$ for ' + filteredGBTotal + ' total GB per Month';
+            setTimeout(calculate_price, 2000);
+        }
+
+        calculate_price();
+        //console.log(edges.get('vpc-vm-a-vm-b').label)
+        //var test_label = edges.get('vpc-vm-a-vm-b').label
+
+
+        network.on("click", function (params) {
+
+            //console.log(all_nodes)
+            //console.log(all_nodes)
+
+            console.log('Printing')
+            //for (let item of Object.values(all_nodes)) {
+            //     console.log(item);
+            //}
+
+            params.event = "[original event]";
+            document.getElementById("eventSpanHeading").innerText = "Click event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+            console.log(
+                "click event, getNodeAt returns: " +
+                this.getNodeAt(params.pointer.DOM)
+            );
+        });
+        network.on("doubleClick", function (params) {
+            params.event = "[original event]";
+            document.getElementById("eventSpanHeading").innerText =
+                "doubleClick event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+        });
+        network.on("oncontext", function (params) {
+            params.event = "[original event]";
+            document.getElementById("eventSpanHeading").innerText =
+                "oncontext (right click) event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+        });
+        network.on("dragStart", function (params) {
+            // There's no point in displaying this event on screen, it gets immediately overwritten
+            params.event = "[original event]";
+            console.log("dragStart Event:", params);
+            console.log(
+                "dragStart event, getNodeAt returns: " +
+                this.getNodeAt(params.pointer.DOM)
+            );
+        });
+        network.on("dragging", function (params) {
+            params.event = "[original event]";
+            document.getElementById("eventSpanHeading").innerText =
+                "dragging event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+        });
+        network.on("dragEnd", function (params) {
+            params.event = "[original event]";
+            document.getElementById("eventSpanHeading").innerText =
+                "dragEnd event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+            console.log("dragEnd Event:", params);
+            console.log(
+                "dragEnd event, getNodeAt returns: " +
+                this.getNodeAt(params.pointer.DOM)
+            );
+        });
+        network.on("controlNodeDragging", function (params) {
+            params.event = "[original event]";
+            document.getElementById("eventSpanHeading").innerText =
+                "control node dragging event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+        });
+        network.on("controlNodeDragEnd", function (params) {
+            params.event = "[original event]";
+            document.getElementById("eventSpanHeading").innerText =
+                "control node drag end event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+            console.log("controlNodeDragEnd Event:", params);
+        });
+        network.on("zoom", function (params) {
+            document.getElementById("eventSpanHeading").innerText = "zoom event:";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+        });
+        network.on("showPopup", function (params) {
+            document.getElementById("eventSpanHeading").innerText =
+                "showPopup event: ";
+            document.getElementById("eventSpanContent").innerText = JSON.stringify(
+                params,
+                null,
+                4
+            );
+        });
+        network.on("hidePopup", function () {
+            console.log("hidePopup Event");
+        });
+        network.on("select", function (params) {
+            console.log("select Event:", params);
+        });
+        network.on("selectNode", function (params) {
+            console.log("selectNode Event:", params);
+        });
+        network.on("selectEdge", function (params) {
+            console.log("selectEdge Event:", params);
+        });
+        network.on("deselectNode", function (params) {
+            console.log("deselectNode Event:", params);
+        });
+        network.on("deselectEdge", function (params) {
+            console.log("deselectEdge Event:", params);
+        });
+        network.on("hoverNode", function (params) {
+            console.log("hoverNode Event:", params);
+        });
+        network.on("hoverEdge", function (params) {
+            console.log("hoverEdge Event:", params);
+        });
+        network.on("blurNode", function (params) {
+            console.log("blurNode Event:", params);
+        });
+        network.on("blurEdge", function (params) {
+            console.log("blurEdge Event:", params);
+        });
+        function editEdgeWithoutDrag(data, callback) {
+            // filling in the popup DOM elements
+            document.getElementById("edge-label").value = data.label;
+            document.getElementById("edge-saveButton").onclick = saveEdgeData.bind(
+                this,
+                data,
+                callback
+            );
+            document.getElementById("edge-cancelButton").onclick =
+                cancelEdgeEdit.bind(this, callback);
+            document.getElementById("edge-popUp").style.display = "block";
+        }
+
+        function clearEdgePopUp() {
+            document.getElementById("edge-saveButton").onclick = null;
+            document.getElementById("edge-cancelButton").onclick = null;
+            document.getElementById("edge-popUp").style.display = "none";
+        }
+
+        function saveEdgeData(data, callback) {
+            if (typeof data.to === "object") data.to = data.to.id;
+            if (typeof data.from === "object") data.from = data.from.id;
+            data.label = document.getElementById("edge-label").value;
+            clearEdgePopUp();
+            callback(data);
+        }
+        function cancelEdgeEdit(callback) {
+            clearEdgePopUp();
+            callback(null);
+        }
+    </script>
+</body>
+
+</html>
