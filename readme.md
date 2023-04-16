@@ -5,5 +5,9 @@
  - We need to find a way to educate and upskill architecture and service team.
  - Network traffic is well suited to a visual representation.
 
-![](aws-network-cost-demo.gif)
 
+# Scenario
+ - Inter availability-zone traffic between EC2 instances in the same region.
+ - Traffic towards a private link towards a third party vendor (not an AWS service).
+
+![](aws-network-cost-demo.gif)
