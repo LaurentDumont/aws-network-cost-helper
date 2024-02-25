@@ -119,7 +119,7 @@
                 //title: "I have a popup!",
                 //shape: "box",
                 shape: "image",
-                image: "vpc.png",
+                image: "icons/vpc.png",
                 //widthConstraint: 800,
                 fixed: { x: true, y: true }, x: 0, y: 0
             },
@@ -128,14 +128,14 @@
                 label: "ec2-001-az-a",
                 //title: "I have a popup!",
                 shape: "image",
-                image: "ec2.png",
+                image: "icons/ec2.png",
                 fixed: { x: true, y: true }, x: 0, y: 100
             },
             {
                 id: 'ec2-001-az-b',
                 label: "ec2-001-az-b",
                 shape: "image",
-                image: "ec2.png",
+                image: "icons/ec2.png",
                 fixed: { x: true, y: true }, x: 500, y: 100
             },
             {
@@ -143,11 +143,30 @@
                 label: "private-link-001",
                 //shape: "box",
                 shape: "image",
-                image: "privatelink.png",
+                image: "icons/privatelink.png",
                 fixed: { x: true, y: true },
-                x: -500, y: 100
+                x: -500, y: 0
             },
+            {
+                id: 'tgw-link-001',
+                label: "Bell Transit Gateway",
+                //shape: "box",
+                shape: "image",
+                image: "icons/tgw.png",
+                fixed: { x: true, y: true },
+                x: 200, y: -40
 
+            },
+            {
+                id: 'bell-on-premise',
+                label: "Bell Datacenters",
+                //shape: "box",
+                shape: "image",
+                image: "icons/bell.png",
+                fixed: { x: true, y: true },
+                x: 200, y: -400
+
+            },
 
         ]);
 
@@ -184,7 +203,11 @@
                 arrows: "to",
                 smooth: { type: "curvedCCW", roundness: 0.2 }
             },
-            //{ id: "private-link-001-vpc", from: 'private-link-001', to: "vpc-001", label: '1000', font: { align: "middle" } },
+            { id: "private-link-001-vpc", smooth: { type: "curvedCCW", roundness: -0.20 }, from: 'private-link-001', arrows: "from", to: "vpc-001", label: '1000GB', font: { align: "middle" } },
+            { id: "private-link-001-vpc-1", smooth: { type: "curvedCCW", roundness: 0.2 }, arrows: "to", from: 'private-link-001', to: "vpc-001", label: '1000GB', font: { align: "middle" } },
+            { id: "tgw-001", smooth: { type: "curvedCCW", roundness: -0.20 }, from: 'vpc-001', arrows: "from", to: "tgw-link-001", label: '1000GB', font: { align: "middle" } },
+            { id: "tgw-002", smooth: { type: "curvedCCW", roundness: 0.2 }, from: 'vpc-001', arrows: "to", to: "tgw-link-001", label: '1000GB', font: { align: "middle" } },
+            { id: "tgw-on-premise-001", from: 'tgw-link-001', arrows: "to", to: "bell-on-premise", label: '1000GB', font: { align: "middle" } },
         ]);
 
         // create a network
@@ -249,8 +272,9 @@
         };
         var network = new vis.Network(container, data, options);
         var sourceCanvas = document.querySelector('canvas');
-        sourceCanvas.style.backgroundImage = "url('bg.png')";
-        network.body.data.edges.add([{ id: "super-private-link", from: "private-link-001", to: 'vpc-001', arrows: "from", label: '1000GB' }])
+        sourceCanvas.style.backgroundImage = "url('icons/bg.png')";
+        //network.body.data.edges.add([{ id: "super-private-link", from: "private-link-001", to: 'vpc-001', arrows: "from", label: '1000GB' }])
+
         function calculate_price() {
             var all_nodes = network.getPositions()
             var total_bandwidth = [];
