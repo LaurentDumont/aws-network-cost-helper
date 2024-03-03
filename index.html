@@ -279,16 +279,51 @@
             var all_nodes = network.getPositions()
             var total_bandwidth = [];
             var all_edges = [];
+            var all_prices = [];
+            gb_price = 0.02
+            console.log("All current nodes in graph :" + all_nodes)
             for (var key in all_nodes) {
+                //console.log("All nodes are")
                 //console.log(key)
+                console.log("Current node " + key)
                 var node_edges = network.getConnectedEdges(key)
                 all_edges.push(node_edges);
-                console.log(node_edges)
+                console.log("All edges of current node " + node_edges)
                 for (var one_edge_key of node_edges) {
+                    console.log("Edge name is " + one_edge_key)
+                    if (one_edge_key === "private-link-001-vpc") {
+                        console.log("Private link! Adjusting pricing")
+                        gb_price = 0.01
+                    } else if (one_edge_key === "private-link-001-vpc-1") {
+                        console.log("Private link! Adjusting pricing")
+                        gb_price = 0.01
+                    } else if (one_edge_key === "tgw-001") {
+                        console.log("TGW! Adjusting pricing")
+                        gb_price = 0.02
+                    } else if (one_edge_key === "tgw-002") {
+                        console.log("TGW! Adjusting pricing")
+                        gb_price = 0.02
+                    }
+                    else if (one_edge_key === "tgw-on-premise-001") {
+                        console.log("TGW! Adjusting pricing")
+                        gb_price = 0.02
+                    }
+                    else if (one_edge_key === "vpc-vm-a-vm-b") {
+                        console.log("VM to VM! Adjusting pricing")
+                        gb_price = 0.01
+                    }
+                    else if (one_edge_key === "vpc-vm-b-vm-a") {
+                        console.log("VM to VM! Adjusting pricing")
+                        gb_price = 0.01
+                    }
                     var test_label = edges.get(one_edge_key).label
                     if (test_label === undefined) { continue; }
                     console.log(test_label)
                     total_bandwidth.push(parseInt(test_label));
+                    bandwidth = parseInt(test_label)
+                    bandwidth_cost = bandwidth * gb_price
+                    console.log("Price for that edge will be " + bandwidth_cost)
+                    all_prices.push(bandwidth_cost)
                 }
             }
             //document.getElementById("edges").innerText = all_edges
@@ -298,10 +333,15 @@
                 initialValue
             );
             console.log(sumWithInitial)
+            // Need to divide by two because links count in both directions
             var filteredGBTotal = sumWithInitial / 2
+            console.log(all_prices)
+            final_price = all_prices.reduce((accumulator, currentValue) => accumulator + currentValue, 0)
+            console.log(final_price / 2)
             document.getElementById("totalprice").innerText =
-                filteredGBTotal * 0.01 + '$ for ' + filteredGBTotal + ' total GB per Month';
+                final_price / 2 + '$ for ' + filteredGBTotal + ' total GB per Month';
             setTimeout(calculate_price, 2000);
+
         }
 
         calculate_price();
